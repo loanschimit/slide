@@ -24,7 +24,6 @@ export default class Slide {
       this.dist.startX = event.clientX;
       movetype = "mousemove";
     } else {
-      console.log(event);
       this.dist.startX = event.changedTouches[0].clientX;
       movetype = "touchmove";
     }
