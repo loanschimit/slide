@@ -8,12 +8,19 @@ export default class Slide {
       movement: 0, // startX - finalPosition
     };
   }
+  transition(active) {
+    this.slide.style.transition = active ? "transform .3s" : "";
+  }
 
-  // bind(this) para puxar o this da class
-  bindEvents() {
-    this.onStart = this.onStart.bind(this);
-    this.onMove = this.onMove.bind(this);
-    this.onEnd = this.onEnd.bind(this);
+  // move 'slide'
+  moveSlide(distX) {
+    this.dist.movePosition = distX; // = finalPosition
+    this.slide.style.transform = `translate3d(${distX}px, 0, 0)`; // move o slide no eixo X
+  }
+
+  updatePosition(clientX) {
+    this.dist.movement = (this.dist.startX - clientX) * 1.6; // posição onde mousemove ocorre
+    return this.dist.finalPosition - this.dist.movement; // posição de transição no eixo X
   }
 
   // previne o padrão, determina o startX como event.clientX, e adiciona o evento de mousemove
@@ -28,17 +35,7 @@ export default class Slide {
       movetype = "touchmove";
     }
     this.wrapper.addEventListener(movetype, this.onMove);
-  }
-
-  // move 'slide'
-  moveSlide(distX) {
-    this.dist.movePosition = distX; // = finalPosition
-    this.slide.style.transform = `translate3d(${distX}px, 0px, 0px)`; // move o slide no eixo X
-  }
-
-  updatePosition(clientX) {
-    this.dist.movement = (this.dist.startX - clientX) * 1.6; // posição onde mousemove ocorre
-    return this.dist.finalPosition - this.dist.movement; // posição de transição no eixo X
+    this.transition(false);
   }
 
   // determina que finalPosition será igual ao this.updatePosition(event.clientX) e executa moveSlide(finalPosition)
@@ -56,7 +53,23 @@ export default class Slide {
     this.wrapper.removeEventListener(movetype, this.onMove); // remove o evento mousemove de wrapper
 
     this.dist.finalPosition = this.dist.movePosition; // determina que a posição final vai ser a do próximo inicio
+    this.transition(true);
+    this.changeSlideOnEnd();
   }
+
+  changeSlideOnEnd() {
+    if (this.dist.movement > 120 && this.index.next !== undefined) {
+      this.activeNextSlide();
+    } else if (this.dist.movement < -120 && this.index.prev !== undefined) {
+      this.activePrevSlide();
+    } else {
+      this.changeSlide(this.index.active);
+    }
+  }
+
+ 
+
+  
 
   // cria os eventos de mousedown e mouseup
   addSlideEvents() {
@@ -66,6 +79,12 @@ export default class Slide {
     this.wrapper.addEventListener("touchend", this.onEnd);
   }
 
+  // bind(this) para puxar o this da class
+  bindEvents() {
+    this.onStart = this.onStart.bind(this);
+    this.onMove = this.onMove.bind(this);
+    this.onEnd = this.onEnd.bind(this);
+  }
   // Slides config
 
   slidePosition(slide) {
@@ -82,25 +101,34 @@ export default class Slide {
       };
     });
   }
-
+  // dados de prev, active, next e do tamanho da array
   slideIndexNav(index) {
     const last = this.slideArray.length - 1;
     this.index = {
-      prev: index ?  index - 1 : undefined,
+      prev: index ? index - 1 : undefined,
       active: index,
       next: index === last ? undefined : index + 1,
     };
   }
-
+  // posição do index
   changeSlide(index) {
-    const activeSlide = this.slideArray[index]
+    const activeSlide = this.slideArray[index];
     this.moveSlide(activeSlide.position);
     this.slideIndexNav(index);
-    this.dist.finalPosition = activeSlide.finalPosition
+    this.dist.finalPosition = activeSlide.position;
+  }
+  // vai para img anterior
+  activePrevSlide() {
+    if (this.index.prev !== undefined) this.changeSlide(this.index.prev);
+  }
+  // vai para img proxima
+  activeNextSlide() {
+    if (this.index.next !== undefined) this.changeSlide(this.index.next);
   }
 
   init() {
     this.bindEvents();
+    this.transition(true);
     this.addSlideEvents();
     this.slidesConfig();
     return this;
