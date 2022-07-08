@@ -12,6 +12,7 @@ img {
 }
 .slide {
   display: flex;
+  /* transition: 0.3s; */
 }
 .slide li {
   flex-shrink: 0;
