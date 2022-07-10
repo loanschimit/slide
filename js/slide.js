@@ -1,6 +1,6 @@
 import debounce from "./debounce-scroll.js";
 
-export default class Slide {
+export class Slide {
   constructor(slide, wrapper) {
     this.slide = document.querySelector(slide); // ul
     this.wrapper = document.querySelector(wrapper); // div envolvendo a ul
@@ -168,56 +168,74 @@ export default class Slide {
   }
 }
 
-export class SlideNav extends Slide {
+// ↓ Extends de Slide sendo exportado
+export default class SlideNav extends Slide {
   constructor(slide, wrapper) {
+    // para o constructor ser o mesmo do que foi extendido utilizamos o super
     super(slide, wrapper);
+    // executa o bind ja no construtor
     this.bindControlEvents();
   }
+
+  // seleciona os botões para prev e next e executa addEventArrow()
   addArrow(prev, next) {
     this.prevElement = document.querySelector(prev);
     this.nextElement = document.querySelector(next);
     this.addEventArrow();
   }
 
+  // adiciona o evento de clique aos botões, executando activePrevSlide e activeNextSlide que são responsáveis por navegar de proximo para anterior
   addEventArrow() {
     this.prevElement.addEventListener("click", this.activePrevSlide);
     this.nextElement.addEventListener("click", this.activeNextSlide);
   }
+
+  // crua uma ul com atributo data-control="slide"
   createControl() {
     const control = document.createElement("ul");
     control.dataset.control = "slide";
-    this.slideArray.forEach((item, index) => {
+    // ↓ faz o loop em slideArray adicionando ao control.innerHTML um a dentro de uma li, contendo href de #slide com index de cada item de slideArray
+    this.slideArray.forEach((index) => {
       control.innerHTML += `<li><a href="#slide${index + 1}">${
         index + 1
       }</a></li>`;
     });
+    // ↓ insere a ul e seu conteudo dentro de wrapper
     this.wrapper.appendChild(control);
-    // console.log(control);
+    // ↓ retorna a ul com seu conteudo
     return control;
   }
+
+  // adiciona um evento de clique ao item, previne o padrão, e executa changeSlide com o index e activeControlItem
   eventControl(item, index) {
     item.addEventListener("click", (event) => {
       event.preventDefault();
-      this.changeSlide(index);
-      this.activeControlItem();
+      this.changeSlide(index); // changeSlide é responsável pela troca de imagens
+      this.activeControlItem(); // responsável por adicionar a classe que será estilizada
     });
+    // determina que quando ocorrer o changeEvent executara o activeControlItem, para quando ocorrer as mudanças no slide a navegação acompanhar
     this.wrapper.addEventListener("changeEvent", this.activeControlItem);
   }
 
+  // remove a classe de todos os itens através do forEach e adiciona a classe ao item que será estilizado
   activeControlItem() {
     this.controlArray.forEach((item) =>
       item.classList.remove(this.activeClass)
     );
+    // [this.index.active] faz referência ao item que estiver selecionado
     this.controlArray[this.index.active].classList.add(this.activeClass);
   }
 
+  // executa createControl() ou o custom que for criado, desestrutura ele como array(controlArray), faz um loop em controlArray executando eventControl()
   addControl(customControl) {
     this.control =
       document.querySelector(customControl) || this.createControl();
     this.controlArray = [...this.control.children];
-    this.activeControlItem()
+    this.activeControlItem(); // executa para adicionar e remover classes que serão estilizadas
     this.controlArray.forEach(this.eventControl);
   }
+
+  // bind para this
   bindControlEvents() {
     this.eventControl = this.eventControl.bind(this);
     this.activeControlItem = this.activeControlItem.bind(this);
