@@ -1,3 +1,5 @@
+import debounce from "./debounce-scroll.js";
+
 export default class Slide {
   constructor(slide, wrapper) {
     this.slide = document.querySelector(slide); // ul
@@ -8,6 +10,7 @@ export default class Slide {
       startX: 0, // posição onde mousedown ocorre
       movement: 0, // startX - finalPosition
     };
+    this.activeClass = "active";
   }
 
   // (3)(7) transição suave
@@ -79,13 +82,6 @@ export default class Slide {
     this.wrapper.addEventListener("touchend", this.onEnd);
   }
 
-  // (2) bind(this) para puxar o this da class
-  bindEvents() {
-    this.onStart = this.onStart.bind(this);
-    this.onMove = this.onMove.bind(this);
-    this.onEnd = this.onEnd.bind(this);
-  }
-
   // (5) Slides config para posicionamento adequado
   slidePosition(slide) {
     const margin = (this.wrapper.offsetWidth - slide.offsetWidth) / 2; // tamanho do wrapper menos o tamanho do slide(argumento), = margin dividido em 2
@@ -119,7 +115,15 @@ export default class Slide {
     this.moveSlide(activeSlide.position); // executa moveSlide com a constante activeSlide.position como argumento
     this.slideIndexNav(index); // determina qual será o próximo o atual e o anterior com configurações especificas
     this.dist.finalPosition = activeSlide.position; // determina que a posição final seja igual a activeSlide.position
+    this.changeActiveClass();
   }
+  changeActiveClass() {
+    this.slideArray.forEach((item) =>
+      item.element.classList.remove(this.activeClass)
+    );
+    this.slideArray[this.index.active].element.classList.add(this.activeClass);
+  }
+
   // (6) vai para img anterior
   activePrevSlide() {
     if (this.index.prev !== undefined) this.changeSlide(this.index.prev);
@@ -129,12 +133,30 @@ export default class Slide {
     if (this.index.next !== undefined) this.changeSlide(this.index.next);
   }
 
+  onResize() {
+    setTimeout(() => {
+      this.slidesConfig();
+      this.changeSlide(this.index.active);
+    }, 1000);
+  }
+  addResizeEvent() {
+    window.addEventListener("resize", this.onResize);
+  }
+  // (2) bind(this) para puxar o this da class
+  bindEvents() {
+    this.onStart = this.onStart.bind(this);
+    this.onMove = this.onMove.bind(this);
+    this.onEnd = this.onEnd.bind(this);
+    this.onResize = debounce(this.onResize.bind(this), 200);
+  }
+
   // (1) inicia o bindEvents, transition(true), addSlideEvents, slidesConfig
   init() {
     this.bindEvents();
     this.transition(true);
     this.addSlideEvents();
     this.slidesConfig();
+    this.addResizeEvent();
     return this;
   }
 }
